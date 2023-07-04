@@ -4,6 +4,7 @@ import sys
 import time
 
 import pygame as pg
+from pygame.sprite import AbstractGroup
 
 
 WIDTH = 1600  # ゲームウィンドウの幅
@@ -145,14 +146,15 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird):
+    def __init__(self, bird: Bird, angle_d: float = 0.0):
         """
         ビーム画像Surfaceを生成する
-        引数 bird：ビームを放つこうかとん
+        引数1 bird：ビームを放つこうかとん
+        引数2 こうかとんの発射角度
         """
         super().__init__()
         self.vx, self.vy = bird.get_direction()
-        angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle = math.degrees(math.atan2(-self.vy, self.vx)) + angle_d
         self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -170,6 +172,20 @@ class Beam(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
+
+class Neo_beams(pg.sprite.Sprite):
+    """
+    弾幕に関するクラス
+    """
+    def __init__(self,bird: Bird, num : int):
+        self.num = num
+        self.bird = bird
+        self.beams = list()
+
+    def gen_beams(self):
+        for rad in range(-50,+51,int(100/(self.num-1))):#100の範囲においてnumに対して幅を設定
+            self.beams.append(Beam(self.bird,rad))
+        return self.beams
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -213,8 +229,8 @@ class Enemy(pg.sprite.Sprite):
         self.vy = +6
         self.bound = random.randint(50, HEIGHT/2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-
+        #self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.interval = 1
     def update(self):
         """
         敵機を速度ベクトルself.vyに基づき移動（降下）させる
@@ -270,6 +286,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE:
+                neoBeam = Neo_beams(bird,5)
+                neoBeams = neoBeam.gen_beams()
+                beams.add(neoBeams)
+            
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
