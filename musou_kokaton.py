@@ -2,6 +2,7 @@ import math
 import random
 import sys
 import time
+from typing import Any
 
 import pygame as pg
 from pygame.sprite import AbstractGroup
@@ -146,7 +147,7 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird, angle_d: float = 0.0):
+    def __init__(self, bird: Bird):
         """
         ビーム画像Surfaceを生成する
         引数1 bird：ビームを放つこうかとん
@@ -154,7 +155,7 @@ class Beam(pg.sprite.Sprite):
         """
         super().__init__()
         self.vx, self.vy = bird.get_direction()
-        angle = math.degrees(math.atan2(-self.vy, self.vx)) + angle_d
+        angle = math.degrees(math.atan2(-self.vy, self.vx))
         self.image = pg.transform.rotozoom(pg.image.load(f"ex04/fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -172,20 +173,6 @@ class Beam(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
-
-class Neo_beams(pg.sprite.Sprite):
-    """
-    弾幕に関するクラス
-    """
-    def __init__(self,bird: Bird, num : int):
-        self.num = num
-        self.bird = bird
-        self.beams = list()
-
-    def gen_beams(self):
-        for rad in range(-50,+51,int(100/(self.num-1))):#100の範囲においてnumに対して幅を設定
-            self.beams.append(Beam(self.bird,rad))
-        return self.beams
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -241,6 +228,31 @@ class Enemy(pg.sprite.Sprite):
             self.state = "stop"
         self.rect.centery += self.vy
 
+class NeoGravity(pg.sprite.Sprite):
+    """
+    画面全体を覆う重力場を発生させるクラス
+    """
+    def __init__(self,life: int):
+        """
+        初期化メゾット
+        引数１:life :存在時間
+        """
+        super().__init__()
+        self.life = life
+        self.image = pg.Surface((WIDTH,HEIGHT))
+        pg.draw.rect(self.image,(10,10,10),pg.Rect(0,0,WIDTH,HEIGHT))
+        self.image.set_colorkey((0,0,0))
+        self.image.set_alpha(200)
+        self.rect = self.image.get_rect()
+
+    def update(self):
+        """
+        発動時間を1減算し、0未満になったら削除
+        """
+        self.life -= 1
+        if self.life <= 0:
+            self.kill()
+
 
 class Score:
     """
@@ -275,6 +287,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    neogras = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -290,6 +303,10 @@ def main():
                 neoBeam = Neo_beams(bird,5)
                 neoBeams = neoBeam.gen_beams()
                 beams.add(neoBeams)
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                if score.score > 200:
+                    neogras.add(NeoGravity(400))
+                    score.score -= 200
             
         screen.blit(bg_img, [0, 0])
 
@@ -310,6 +327,15 @@ def main():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
 
+        for bomb in pg.sprite.groupcollide(bombs, neogras, True, False).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
+
+        for emy in pg.sprite.groupcollide(emys, neogras, True, False).keys():
+            exps.add(Explosion(emy, 50))  # 爆発エフェクト
+            score.score_up(10)  # 1点アップ
+            print(neogras)
+
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
@@ -326,6 +352,8 @@ def main():
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
+        neogras.draw(screen)
+        neogras.update()
         score.update(screen)
         pg.display.update()
         tmr += 1
