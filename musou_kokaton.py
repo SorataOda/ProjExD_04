@@ -2,7 +2,6 @@ import math
 import random
 import sys
 import time
-
 import pygame as pg
 
 
@@ -112,6 +111,7 @@ class Bird(pg.sprite.Sprite):
         if self.hyper_life < 0:
             self.change_state("normal", -1)
         screen.blit(self.image, self.rect)
+
     
     def get_direction(self) -> tuple[int, int]:
         return self.dire
@@ -314,6 +314,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
+                bird.speed = 20
+            if event.type == pg.KEYUP and event.key == pg.K_LSHIFT:
+                bird.speed = 10
+            
                 
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT:
                 if score.score > 100:
@@ -365,6 +370,7 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
 
         bird.update(key_lst, screen)
         beams.update()
