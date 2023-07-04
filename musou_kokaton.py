@@ -286,7 +286,7 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
             if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE:
-                neoBeam = Neo_beams(bird,5)
+                neoBeam = Neo_beams(bird,5)#追加機能４
                 neoBeams = neoBeam.gen_beams()
                 beams.add(neoBeams)
             
