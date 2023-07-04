@@ -2,7 +2,9 @@ import math
 import random
 import sys
 import time
+from typing import Any
 import pygame as pg
+from pygame.sprite import AbstractGroup
 
 
 WIDTH = 1600  # ゲームウィンドウの幅
@@ -159,7 +161,8 @@ class Beam(pg.sprite.Sprite):
     def __init__(self, bird: Bird):
         """
         ビーム画像Surfaceを生成する
-        引数 bird：ビームを放つこうかとん
+        引数1 bird：ビームを放つこうかとん
+        引数2 こうかとんの発射角度
         """
         super().__init__()
         self.vx, self.vy = bird.get_direction()
@@ -225,7 +228,6 @@ class Enemy(pg.sprite.Sprite):
         self.bound = random.randint(50, HEIGHT/2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-
     def update(self):
         """
         敵機を速度ベクトルself.vyに基づき移動（降下）させる
@@ -236,6 +238,31 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.centery += self.vy
+
+class NeoGravity(pg.sprite.Sprite):
+    """
+    画面全体を覆う重力場を発生させるクラス
+    """
+    def __init__(self,life: int):
+        """
+        初期化メゾット
+        引数１:life :存在時間
+        """
+        super().__init__()
+        self.life = life
+        self.image = pg.Surface((WIDTH,HEIGHT))
+        pg.draw.rect(self.image,(10,10,10),pg.Rect(0,0,WIDTH,HEIGHT))
+        self.image.set_colorkey((0,0,0))
+        self.image.set_alpha(200)
+        self.rect = self.image.get_rect()
+
+    def update(self):
+        """
+        発動時間を1減算し、0未満になったら削除
+        """
+        self.life -= 1
+        if self.life <= 0:
+            self.kill()
 
 
 class Shield(pg.sprite.Sprite):
@@ -303,7 +330,11 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+
+    neogras = pg.sprite.Group()
+
     shields=pg.sprite.Group()
+
 
     tmr = 0
     clock = pg.time.Clock()
@@ -314,6 +345,17 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+
+            if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE:
+                #追加機能４
+                neoBeam = Neo_beams(bird,5)
+                neoBeams = neoBeam.gen_beams()
+                beams.add(neoBeams)
+            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                if score.score > 200:
+                    neogras.add(NeoGravity(400))
+                    score.score -= 200
+
             if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
                 bird.speed = 20
             if event.type == pg.KEYUP and event.key == pg.K_LSHIFT:
@@ -348,6 +390,15 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.score_up(1)  # 1点アップ
+
+        for bomb in pg.sprite.groupcollide(bombs, neogras, True, False).keys():
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+            score.score_up(1)  # 1点アップ
+
+        for emy in pg.sprite.groupcollide(emys, neogras, True, False).keys():
+            exps.add(Explosion(emy, 50))  # 爆発エフェクト
+            score.score_up(10)  # 1点アップ
+            print(neogras)
             
         for bomb in pg.sprite.spritecollide(bird,bombs,True):
             if bird.state == "hyper":
@@ -381,6 +432,8 @@ def main():
         bombs.draw(screen)
         exps.update()
         exps.draw(screen)
+        neogras.draw(screen)
+        neogras.update()
         score.update(screen)
         shields.update()
         shields.draw(screen)
