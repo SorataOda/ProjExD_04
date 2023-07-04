@@ -171,37 +171,6 @@ class Beam(pg.sprite.Sprite):
             self.kill()
 
 
-class Shield(pg.sprite.Sprite):
-    """
-    防御壁に関するクラス
-    """
-    def __init__(self,bird:Bird, life: int):
-        """
-        壁のエフェクトを生成する
-        引数1 obj：爆発するBombまたは敵機インスタンス
-        引数2 life：爆発時間
-        """
-        super().__init__()
-        vx, vy = bird.dire
-        theta=math.atan2(-vy,-vx)
-        angle=math.degrees(theta)
-        self.image = pg.Surface((20,bird.rect.height*2))
-        self.image=pg.transform.rotozoom(self.image,angle,1.0)
-        pg.draw.rect(self.image, (0, 0, 0), pg.Rect(0,0,20,bird.rect.height*2))
-        self.rect = self.image.get_rect()
-        self.rect.centerx=bird.rect.centerx+bird.rect.width*vx
-        self.rect.centery=bird.rect.centery+bird.rect.height*vy
-        self.life=life
-
-    def update(self):
-        """
-        壁発動中は壁を有効か
-        """
-        self.life -= 1
-        if self.life < 0:
-            self.kill()
-
-
 class Explosion(pg.sprite.Sprite):
     """
     爆発に関するクラス
@@ -256,6 +225,37 @@ class Enemy(pg.sprite.Sprite):
             self.vy = 0
             self.state = "stop"
         self.rect.centery += self.vy
+
+
+class Shield(pg.sprite.Sprite):
+    """
+    防御壁に関するクラス
+    """
+    def __init__(self,bird:Bird, life: int):
+        """
+        壁のエフェクトを生成する
+        引数1 こうかとん
+        引数2 壁の持続時間
+        """
+        super().__init__()
+        vx, vy = bird.dire
+        theta=math.atan2(-vy,-vx)
+        angle=math.degrees(theta)
+        self.image = pg.Surface((20,bird.rect.height*2))
+        self.image=pg.transform.rotozoom(self.image,angle,1.0)
+        pg.draw.rect(self.image, (0, 0, 0), pg.Rect(0,0,20,bird.rect.height*2))
+        self.rect = self.image.get_rect()
+        self.rect.centerx=bird.rect.centerx+bird.rect.width*vx
+        self.rect.centery=bird.rect.centery+bird.rect.height*vy
+        self.life=life
+
+    def update(self):
+        """
+        壁発動中は壁の持続時間をカウント
+        """
+        self.life -= 1
+        if self.life < 0:
+            self.kill()
 
 
 class Score:
