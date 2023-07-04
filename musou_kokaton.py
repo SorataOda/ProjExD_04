@@ -2,7 +2,6 @@ import math
 import random
 import sys
 import time
-
 import pygame as pg
 
 
@@ -101,6 +100,7 @@ class Bird(pg.sprite.Sprite):
             self.dire = tuple(sum_mv)
             self.image = self.imgs[self.dire]
         screen.blit(self.image, self.rect)
+
     
     def get_direction(self) -> tuple[int, int]:
         return self.dire
@@ -270,6 +270,11 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
+            if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
+                bird.speed = 20
+            if event.type == pg.KEYUP and event.key == pg.K_LSHIFT:
+                bird.speed = 10
+            
         screen.blit(bg_img, [0, 0])
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
@@ -295,6 +300,7 @@ def main():
             pg.display.update()
             time.sleep(2)
             return
+        
 
         bird.update(key_lst, screen)
         beams.update()
