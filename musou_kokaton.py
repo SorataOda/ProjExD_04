@@ -229,8 +229,7 @@ class Enemy(pg.sprite.Sprite):
         self.vy = +6
         self.bound = random.randint(50, HEIGHT/2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        #self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-        self.interval = 1
+        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
     def update(self):
         """
         敵機を速度ベクトルself.vyに基づき移動（降下）させる
